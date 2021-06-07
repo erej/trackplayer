@@ -67,7 +67,7 @@ class TrackPlayer:
         self.lcd.lcd_display_string("Initializing", 2)
         
         # Mediaplayer
-        self.instance = vlc.Instance()
+        self.instance = vlc.Instance("--aout=alsa")
         self.media = None
         self.mediaplayer = self.instance.media_player_new()
         self.alsa = alsaaudio.Mixer(alsaaudio.mixers()[0])
@@ -250,10 +250,11 @@ class TrackPlayer:
         self.lcd.lcd_display_string(line4, 4)
 
     def lcd_write_line(self, string, line_number=1, clear_line=True):
+        if clear_line:
+            self.lcd_clear_line(line_number)
         self.lcd.lcd_display_string(string, line_number)
 
     def lcd_update_track_time(self):
-        
         self.track_playtime = self.mediaplayer.get_time()
         playhead_milliseconds = int(self.track_playtime)
         playhead_seconds=(playhead_milliseconds/1000)%60
@@ -263,10 +264,10 @@ class TrackPlayer:
         track_minutes, track_seconds = divmod(self.track_length, 60) 
         play_information = '{:02d}:{:02d} / {:02d}:{:02d}'.format(playhead_minutes, playhead_seconds, int(track_minutes), int(track_seconds))
         if self.lcd:
-            self.lcd_write_line(play_information, 4)            
+            self.lcd_write_line(play_information, 4, True)            
 
     def load_track(self, filename):
-        self.lcd_write_line('>> Loading the MP3... <<', 4)    
+        self.lcd_write_line('Loading the MP3...', 4, True)    
         self.media = self.instance.media_new(filename)
         self.mediaplayer.set_media(self.media)
 
@@ -282,10 +283,7 @@ class TrackPlayer:
                 self.current_track = self.track
                 self.lcd_clear_line(4)
             if self.media:
-                #self.lcd_write_line('>>', 4)
                 self.mediaplayer.audio_set_volume(100)
-                #self.alsa.setvolume(100, 0)
-                #self.alsa.setvolume(10, 1)
                 self.mediaplayer.play()
         except Exception as e:
             self.lcd_display_error('', '', 'Error in playing', self.track.get('number', ''))
